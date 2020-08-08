@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <script src='https://d3js.org/d3.v5.min.js'></script>
+  <style>
+    body { 
+      font-family: "avenir next", Arial, sans-serif;
+      font-size: 12px;
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+
+<div style="padding:50px">
+	<div style="border:1px solid #616161" width="1200" height="500" id='divContent'></div>
+</div>
+	
+<script>
+var dataAux = null;
+function CreateCirclesOfProcessos(seletor, data, numWidth, numHeight) {
+
+    let numBoundaryDiameter = 50;
+    let numBoundaryRadius = 5;
+    let numMaxRadius = 100;
+    let numMargin = data.length * 10;
+    let n = 50;
+	
+    const radiusScale = d3.scaleSqrt()
+        .domain([0, d3.max(data, d => d.value)])
+        .range([0, numMaxRadius]);
+
+    const radius = function (d) {
+        return radiusScale(d.value);
+    }
+
+    let objNodes = CreateProcessosNodes(n, numBoundaryRadius, numBoundaryDiameter, data, numWidth, numHeight);
+
+    let objGraphData = GetProcessosGraphData(radius, objNodes);
+
+    const objSVG = seletor.append('svg')
+        .attr("width", numWidth)
+        .attr("height", numHeight + numMargin);
+
+    let objGroup = objSVG.append('g')
+        .attr("transform", "translate(" + 70 + ", " + 70 + ")");
+
+    objGroup.append("rect")
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("width", numWidth)
+        .attr("height", numHeight)
+        .style("stroke", "none")
+        .style("fill", "none");
+
+    let objCircles = objGroup.selectAll("circle")
+        .data(objGraphData.nodes)
+        .enter()
+        .append("g")
+        .style("cursor", "pointer")
+        .attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; });
+
+    objCircles.append("circle")
+        .attr("cx", 0)
+        .attr("cy", 0)
+        .attr("r", radius)
+        .style("fill", "#FF5532")
+        .style("stroke", "white");
+
+    objCircles.append("text")
+        .text(d => d.name)
+        .attr("dy", "0.01em")
+        .style("text-anchor", "middle")
+        .style("stroke", "none")
+        .style("fill", "#000")
+        .attr("font-family", "'Ubuntu', sans-serif")
+        .attr("font-weight", "700")
+        .attr("font-size", function (d) { return radiusScale(d.value) / 4; });
+
+    objCircles.append("text")
+        .text(function (d) { return "R$ " + objThat.TryParseDecimalValue(d.value); })
+        .attr("dy", "1.1em")
+        .style("text-anchor", "middle")
+        .style("stroke", "none")
+        .style("fill", "#000")
+        .attr("font-family", "'Ubuntu', sans-serif")
+        .attr("font-size", function (d) { return radiusScale(d.value) / 5; });
+}
+
+function CoordinatePosition(d, i) {
+
+    let numMaxRadius = 50;
+	return numMaxRadius + i * 20;
+}
+
+function GetStrength(d, i) {
+    return i == 0 ? 1 : 0.1
+};
+
+function CreateProcessosNodes(n, numBoundaryRadius, numBoundaryDiameter, data, numWidth, numHeight) {
+
+    let arr = [];
+
+    data.forEach(function (d, i) {
+
+        let obj = {};
+        obj.index = 2 * n + 1;
+        obj.type = "data";
+        obj.name = d.name;
+        obj.value = d.value;
+        obj.idProcesso = d.idProcesso;
+        obj.numeroProcesso = d.numeroProcesso;
+        obj.x = numWidth / 2;
+        obj.y = numHeight / 2;
+        arr.push(obj);
+    });
+
+    arr.sort((a, b) => b.value - a.value);
+
+    return arr;
+}
+
+function GetProcessosGraphData(numRadius, objNodes) {
+
+    let obj = {};
+
+    const force = d3.forceSimulation(objNodes)
+        .force("x", d3.forceX().x(CoordinatePosition).strength(GetStrength))
+        .force("y", d3.forceY().y(CoordinatePosition).strength(GetStrength))
+        .force('many', d3.forceManyBody().strength(2))
+        .force('collide', d3.forceCollide().radius(numRadius).strength(1))
+        .stop();
+
+    force.tick(120);
+
+    obj.nodes = objNodes;
+
+    return obj;
+}
+
+var data = [{"idprocesso":1,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0070","value":5864},{"idprocesso":2,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0071","value":21360},{"idprocesso":3,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0072","value":43533},{"idprocesso":4,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0073","value":53554},{"idprocesso":5,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0074","value":79866},{"idprocesso":6,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0075","value":84860},{"idprocesso":7,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0076","value":35109},{"idprocesso":8,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0077","value":87779},{"idprocesso":9,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0078","value":56713},{"idprocesso":10,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0079","value":71930},{"idprocesso":11,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0080","value":77373},{"idprocesso":12,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0081","value":39438},{"idprocesso":13,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0082","value":44280},{"idprocesso":14,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0083","value":42506},{"idprocesso":15,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0084","value":68716},{"idprocesso":16,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0085","value":80738},{"idprocesso":17,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0086","value":42525},{"idprocesso":18,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0087","value":94496},{"idprocesso":19,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0088","value":42482},{"idprocesso":20,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0089","value":92898},{"idprocesso":21,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0090","value":90927},{"idprocesso":22,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0091","value":11343},{"idprocesso":23,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0092","value":74925},{"idprocesso":24,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0093","value":13603},{"idprocesso":25,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0094","value":46522},{"idprocesso":26,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0095","value":59893},{"idprocesso":27,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0096","value":11982},{"idprocesso":28,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0097","value":91256},{"idprocesso":29,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0098","value":97707},{"idprocesso":30,"name":"John Doe James Jones","numeroprocesso":"0010207-38.2020.5.03.0099","value":34489}];
+	
+	const divContent = d3.select("#divContent");
+	const numWidth = +divContent.attr('width');
+	const numHeight = +divContent.attr('height');
+	
+	CreateCirclesOfProcessos(divContent, data, numWidth, numHeight);
+
+</script>
+</body>
+</html>
